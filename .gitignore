@@ -1,36 +1,51 @@
-# Virtual env
-venv/
-.venv/
-env/
-
-# Python cache
+# =========================
+# Python
+# =========================
 __pycache__/
 *.py[cod]
+*.pyo
+*.pyd
 
-# Jupyter / docs / archives (biasanya besar)
+# Virtual environment
+venv/
+env/
+.venv/
+
+# =========================
+# Flask
+# =========================
+instance/
+.webassets-cache
+
+# =========================
+# Jupyter Notebook
+# =========================
 .ipynb_checkpoints/
-*.ipynb
-*.pdf
-*.zip
-*.rar
-*.7z
 
-# OS / editor
+# =========================
+# OS Files
+# =========================
 .DS_Store
 Thumbs.db
+
+# =========================
+# Logs
+# =========================
+*.log
+
+# =========================
+# IDE / Editor
+# =========================
 .vscode/
 .idea/
 
-# Node (kalau ada)
-node_modules/
-dist/
-build/
-out/
-
-# Model (kalau suatu saat tersimpan)
+# =========================
+# Model files (jika suatu saat ada)
+# =========================
 *.joblib
 *.pkl
 
-# Logs / env
-*.log
+# =========================
+# Environment variables
+# =========================
 .env
