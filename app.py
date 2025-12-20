@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request
+import os
 import numpy as np
 import pandas as pd
 
@@ -12,25 +13,22 @@ app = Flask(__name__)
 # =========================
 # CONFIG
 # =========================
-DATA_PATH = "heart.csv"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_PATH = os.path.join(BASE_DIR, "heart.csv")   # ✅ aman di Vercel
 TARGET_COL = "target"
 
-# Urutan kolom fitur sesuai dataset (tanpa target)
 FEATURE_ORDER = [
     "age", "sex", "cp", "trestbps", "chol", "fbs", "restecg",
     "thalach", "exang", "oldpeak", "slope", "ca", "thal"
 ]
 
-# Kolom kategori (sudah numerik, tapi inputnya dropdown)
 CATEGORICAL_COLS = ["sex", "cp", "fbs", "restecg", "exang", "slope", "ca", "thal"]
-
 
 # =========================
 # LOAD DATA
 # =========================
 df = pd.read_csv(DATA_PATH)
 
-# Validasi kolom wajib ada
 missing_cols = [c for c in FEATURE_ORDER + [TARGET_COL] if c not in df.columns]
 if missing_cols:
     raise ValueError(f"Kolom berikut tidak ditemukan di {DATA_PATH}: {missing_cols}")
@@ -38,20 +36,17 @@ if missing_cols:
 X = df[FEATURE_ORDER]
 y = df[TARGET_COL].astype(int)
 
-
 # =========================
 # DROPDOWN VALUES
 # =========================
 def build_dropdown_values(df: pd.DataFrame) -> dict:
-    """Buat dropdown hanya untuk kolom kategori."""
     data = {}
     for col in CATEGORICAL_COLS:
         data[col] = sorted(df[col].dropna().unique().tolist())
     return data
 
-
 # =========================
-# TRAIN MODEL (sekali saat start, TANPA evaluasi print)
+# TRAIN MODEL (sekali saat start)
 # =========================
 preprocess = ColumnTransformer(
     transformers=[("num", StandardScaler(), FEATURE_ORDER)],
@@ -63,9 +58,7 @@ model = Pipeline(steps=[
     ("clf", GaussianNB())
 ])
 
-# Latih model pakai seluruh data (karena evaluasi sudah dilakukan di ipynb)
 model.fit(X, y)
-
 
 # =========================
 # ROUTES
@@ -82,7 +75,6 @@ def home():
         values=None
     )
 
-
 @app.route("/predict", methods=["POST"])
 def predict():
     dropdown_data = build_dropdown_values(df)
@@ -91,20 +83,17 @@ def predict():
         filled = {}
         features = []
 
-        # Ambil input sesuai urutan dataset
         for col in FEATURE_ORDER:
             raw_val = request.form.get(col, "").strip()
             filled[col] = raw_val
-
             if raw_val == "":
                 raise ValueError(f"Kolom '{col}' belum diisi.")
-
             features.append(float(raw_val))
 
         X_input = pd.DataFrame([features], columns=FEATURE_ORDER)
 
         pred_class = int(model.predict(X_input)[0])
-        proba = model.predict_proba(X_input)[0]  # [P(0), P(1)]
+        proba = model.predict_proba(X_input)[0]
         conf_pct = float(np.max(proba) * 100)
 
         result = (
@@ -118,7 +107,6 @@ def predict():
             f"Keyakinan: {conf_pct:.2f}%"
         )
 
-        # Bar chart probabilitas (Plotly)
         labels = ["P(0) Tidak", "P(1) Ya"]
         values = [float(proba[0]), float(proba[1])]
 
@@ -143,7 +131,6 @@ def predict():
             labels=None,
             values=None
         )
-
 
 if __name__ == "__main__":
     app.run(debug=True)
